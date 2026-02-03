@@ -14,10 +14,13 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addItemAnalysis,
+  addPackageItems,
   deleteAnalysisItem,
   getAllItemsServiceById,
+  getAllMedicalPackages,
   getServiceById,
   updateAnalysisItem,
+  updatePackageItems,
 } from "../utlis/https";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -26,13 +29,16 @@ import { useTranslation } from "react-i18next";
 import { AiFillDelete, AiFillEdit } from "react-icons/ai";
 import { toast } from "react-toastify";
 import AddEditAnalysisItemDialog from "../components/medicalServices/AddEditAnalysisItemDialog";
+import AddEditPackagesDialog from "../components/medicalServices/AddEditPackagesDialog";
 
 const MedicalServiceDetails = () => {
   const { id } = useParams();
   const [tab, setTab] = useState(0);
+  const [insideItemTab, setInsideItemTab] = useState(0);
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPackageDialog, setIsPackageDialog] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +72,34 @@ const MedicalServiceDetails = () => {
     },
   });
 
+  let { mutate: packageMutate } = useMutation({
+    mutationFn: async (formData) => {
+      const isEdit = !!formData.id;
+      if (isEdit) {
+        return await updatePackageItems(formData.id, formData);
+      } else {
+        return await addPackageItems(formData);
+      }
+    },
+    onSuccess: () => {
+      setIsSubmitting(false);
+      setIsPackageDialog(false);
+      queryClient.invalidateQueries({
+        queryKey: ["all-packages"],
+      });
+      toast.success(
+        i18n.language == "en"
+          ? "Service updated successfully"
+          : "تم تحديث الخدمة بنجاح",
+      );
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      setIsSubmitting(false);
+      setIsPackageDialog(false);
+    },
+  });
+
   const handleOpenAdd = () => {
     setSelectedService(null);
     setIsDialogOpen(true);
@@ -80,19 +114,44 @@ const MedicalServiceDetails = () => {
     setIsDialogOpen(false);
   };
 
+  const handleOpenPackageDialog = () => {
+    setIsPackageDialog(true);
+    setSelectedService(null);
+  };
+
+  const handleClosePackageDialog = () => {
+    setIsPackageDialog(false);
+  };
+
   const onFormSubmit = (data) => {
     setIsSubmitting(true);
     mutate(data);
+  };
+
+  const handleOpenPackageEdit = (service) => {
+    setSelectedService(service);
+    setIsPackageDialog(true);
+  };
+
+  const onFormSubmitPackage = (data) => {
+    setIsSubmitting(true);
+    packageMutate(data);
   };
 
   const { data: serviceData } = useQuery({
     queryKey: ["medical-service", id],
     queryFn: () => getServiceById(id),
   });
+
   const { data: serviceItemsData } = useQuery({
     queryKey: ["all-items-service", id],
     queryFn: () => getAllItemsServiceById(id),
   });
+  const { data: medicalPackages } = useQuery({
+    queryKey: ["all-packages"],
+    queryFn: () => getAllMedicalPackages(id),
+  });
+
   const { mutate: itemDeleteMutate } = useMutation({
     mutationFn: ({ id }) => deleteAnalysisItem(id),
     onSuccess: () => {
@@ -102,6 +161,7 @@ const MedicalServiceDetails = () => {
       toast.error(t("serviceDeleteFailed"));
     },
   });
+
   const direction = i18n.language === "ar" ? "rtl" : "ltr";
 
   if (!serviceData) return null;
@@ -115,24 +175,6 @@ const MedicalServiceDetails = () => {
       toast.success(t("serviceDeletedSuccess"));
     }
   };
-
-  // const onSubmit = (formData) => {
-  //   if (serviceEdit) {
-  //     updateMedicalServiceMutate({ id: serviceEdit.id, formData });
-  //     setServiceEdit(null);
-  //   } else {
-  //     addMedicalAnalysisMutate(formData);
-  //   }
-  // };
-
-  // const handleEditClick = (service) => {
-  //   setServiceEdit(service);
-  //   setOpenDialog(true);
-  // };
-
-  // const handleAddMedical = () => {
-  //   setOpenDialog(true);
-  // };
 
   return (
     <>
@@ -343,146 +385,301 @@ const MedicalServiceDetails = () => {
             )}
 
             {tab === 1 && (
-              <div className="w-full rounded-lg border border-gray-200 bg-white shadow-sm overflow-x-auto">
-                <div className="my-5 mx-5 flex justify-end items-center">
-                  <button
-                    onClick={handleOpenAdd}
-                    className="px-4 py-2 shrik-0 hover:bg-[#048c87] w-auto flex justify-center items-center text-white gap-1 bg-gradient-to-bl from-[#33A9C7] to-[#3AAB95] text-lg rounded-[8px] focus:outline-none text-center"
-                  >
-                    <Plus /> {t("add_analysis_item")}
-                  </button>
-                </div>
+              <>
+                <Tabs
+                  variant="fullWidth"
+                  value={insideItemTab}
+                  onChange={(_, v) => setInsideItemTab(v)}
+                  sx={{
+                    borderBottom: "1px solid #e5e9f0",
+                    "& .MuiTab-root": {
+                      textTransform: "none",
+                      fontSize: "1rem",
+                      fontWeight: 500,
+                      color: "#718096",
+                      py: 2,
+                      px: 1,
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        color: "#0066cc",
+                        background: "rgba(0, 102, 204, 0.02)",
+                      },
+                      "&.Mui-selected": {
+                        color: "#0066cc",
+                        fontWeight: 600,
+                      },
+                    },
+                    "& .MuiTabs-indicator": {
+                      background: "#0066cc",
+                      height: "3px",
+                    },
+                  }}
+                  className="mb-3"
+                >
+                  <Tab
+                    className="w-1/2"
+                    onClick={() => setInsideItemTab(0)}
+                    label={t("add_analysis_item")}
+                  />
+                  <Tab
+                    className="w-1/2"
+                    onClick={() => setInsideItemTab(1)}
+                    label={t("medical_tab_package")}
+                  />
+                </Tabs>
 
-                <div className="min-w-full">
-                  <table
-                    style={{
-                      direction: i18n.language === "ar" ? "rtl" : "ltr",
-                    }}
-                    className="min-w-[1000px] w-full bg-white text-sm"
-                  >
-                    <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
-                      <tr>
-                        <th className="py-4 px-4 text-center border-b">
-                          {t("name")}
-                        </th>
-                        <th className="py-4 px-4 text-center border-b">
-                          {t("medical_service_price")}
-                        </th>
-                        <th className="py-4 px-4 text-center border-b">
-                          {t("tabi_price")}
-                        </th>
-                        <th className="py-4 px-4 text-center border-b">
-                          {t("medical_notes")}
-                        </th>
-                        <th className="py-4 px-4 text-center border-b">
-                          {t("medical_tags")}
-                        </th>
-                        <th className="py-4 px-4 text-center border-b">
-                          {t("status")}
-                        </th>
-                        <th className="py-4 px-4 text-center border-b">
-                          {t("actions")}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-gray-600">
-                      {serviceItemsData && serviceItemsData.length > 0 ? (
-                        serviceItemsData.map((item) => (
-                          <tr
-                            key={item.id}
-                            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                          >
-                            <td className="py-4 px-4 text-center font-medium text-gray-900">
-                              {item.name}
-                            </td>
+                {insideItemTab == 0 && (
+                  <div className="w-full rounded-lg border border-gray-200 bg-white shadow-sm overflow-x-auto">
+                    <div className="my-5 mx-5 flex justify-end items-center">
+                      <button
+                        onClick={handleOpenAdd}
+                        className="px-4 py-2 shrik-0 hover:bg-[#048c87] w-auto flex justify-center items-center text-white gap-1 bg-gradient-to-bl from-[#33A9C7] to-[#3AAB95] text-lg rounded-[8px] focus:outline-none text-center"
+                      >
+                        <Plus /> {t("add_analysis_item")}
+                      </button>
+                    </div>
 
-                            <td className="py-4 px-4 text-center">
-                              {item.service_price} EGP
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              {item.tabi_price} EGP
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <div className="flex flex-wrap justify-center gap-1">
-                                {item.notes && item.notes.length > 0 ? (
-                                  item.notes.map((note, i) => (
-                                    <span
-                                      key={i}
-                                      className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[10px] font-medium border border-gray-200"
-                                    >
-                                      {note}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-gray-400 text-xs">
-                                    -
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              <div className="flex flex-wrap justify-center gap-1">
-                                {item.tags && item.tags.length > 0 ? (
-                                  item.tags.map((note, i) => (
-                                    <span
-                                      key={i}
-                                      className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[10px] font-medium border border-gray-200"
-                                    >
-                                      {note}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-gray-400 text-xs">
-                                    -
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  item.status
-                                    ? "bg-green-50 text-green-700 border border-green-200"
-                                    : "bg-red-50 text-red-700 border border-red-200"
-                                }`}
-                              >
-                                {item.status ? t("Active") : t("Inactive")}
-                              </span>
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <button
-                                onClick={() => handleOpenEdit(item)}
-                                className="text-blue-500 hover:text-blue-700 transition-transform hover:scale-110"
-                              >
-                                <AiFillEdit size={24} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteClick(item.id)}
-                                className="text-red-500 hover:text-red-700 focus:outline-none"
-                              >
-                                <AiFillDelete size={28} />
-                              </button>
-                            </td>
+                    <div className="min-w-full">
+                      <table
+                        style={{
+                          direction: i18n.language === "ar" ? "rtl" : "ltr",
+                        }}
+                        className="min-w-[1000px] w-full bg-white text-sm"
+                      >
+                        <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
+                          <tr>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("name")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("medical_service_price")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("tabi_price")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("total_price")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("medical_notes")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("medical_tags")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("status")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("actions")}
+                            </th>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={6}
-                            className="py-10 text-center text-gray-500"
-                          >
-                            {t("noData")}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                        </thead>
+                        <tbody className="text-gray-600">
+                          {serviceItemsData && serviceItemsData.length > 0 ? (
+                            serviceItemsData.map((item) => (
+                              <tr
+                                key={item.id}
+                                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                              >
+                                <td className="py-4 px-4 text-center font-medium text-gray-900">
+                                  {item.name}
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  {item.service_price} EGP
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  {item.tabi_price} EGP
+                                </td>
+                                <td className="py-4 px-4 text-center">
+                                  {Number(item.service_price) +
+                                    Number(item.tabi_price)}{" "}
+                                  EGP
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  <div className="flex flex-wrap justify-center gap-1">
+                                    {item.notes && item.notes.length > 0 ? (
+                                      item.notes.map((note, i) => (
+                                        <span
+                                          key={i}
+                                          className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[10px] font-medium border border-gray-200"
+                                        >
+                                          {note}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-gray-400 text-xs">
+                                        -
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-4 px-4 text-center">
+                                  <div className="flex flex-wrap justify-center gap-1">
+                                    {item.tags && item.tags.length > 0 ? (
+                                      item.tags.map((note, i) => (
+                                        <span
+                                          key={i}
+                                          className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[10px] font-medium border border-gray-200"
+                                        >
+                                          {note}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-gray-400 text-xs">
+                                        -
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                      item.status
+                                        ? "bg-green-50 text-green-700 border border-green-200"
+                                        : "bg-red-50 text-red-700 border border-red-200"
+                                    }`}
+                                  >
+                                    {item.status ? t("Active") : t("Inactive")}
+                                  </span>
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  <button
+                                    onClick={() => handleOpenEdit(item)}
+                                    className="text-blue-500 hover:text-blue-700 transition-transform hover:scale-110"
+                                  >
+                                    <AiFillEdit size={24} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteClick(item.id)}
+                                    className="text-red-500 hover:text-red-700 focus:outline-none"
+                                  >
+                                    <AiFillDelete size={28} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan={6}
+                                className="py-10 text-center text-gray-500"
+                              >
+                                {t("noData")}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {insideItemTab == 1 && (
+                  <div className="w-full rounded-lg border border-gray-200 bg-white shadow-sm overflow-x-auto">
+                    <div className="my-5 mx-5 flex justify-end items-center">
+                      <button
+                        onClick={handleOpenPackageDialog}
+                        className="px-4 py-2 shrik-0 hover:bg-[#048c87] w-auto flex justify-center items-center text-white gap-1 bg-gradient-to-bl from-[#33A9C7] to-[#3AAB95] text-lg rounded-[8px] focus:outline-none text-center"
+                      >
+                        <Plus /> {t("add_analysis_packages")}
+                      </button>
+                    </div>
+
+                    <div className="min-w-full">
+                      <table
+                        style={{
+                          direction: i18n.language === "ar" ? "rtl" : "ltr",
+                        }}
+                        className="min-w-[1000px] w-full bg-white text-sm"
+                      >
+                        <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
+                          <tr>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("name")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("medical_service_price")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("tabi_price")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("total_price")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("status")}
+                            </th>
+                            <th className="py-4 px-4 text-center border-b">
+                              {t("actions")}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-gray-600">
+                          {medicalPackages && medicalPackages.length > 0 ? (
+                            medicalPackages.map((item) => (
+                              <tr
+                                key={item.id}
+                                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                              >
+                                <td className="py-4 px-4 text-center font-medium text-gray-900">
+                                  {item.name}
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  {item.medical_service_price} EGP
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  {item.tabi_price} EGP
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  {item.price} EGP
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                      item.status
+                                        ? "bg-green-50 text-green-700 border border-green-200"
+                                        : "bg-red-50 text-red-700 border border-red-200"
+                                    }`}
+                                  >
+                                    {item.status ? t("Active") : t("Inactive")}
+                                  </span>
+                                </td>
+
+                                <td className="py-4 px-4 text-center">
+                                  <button
+                                    onClick={() => handleOpenPackageEdit(item)}
+                                    className="text-blue-500 hover:text-blue-700 transition-transform hover:scale-110"
+                                  >
+                                    <AiFillEdit size={24} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan={6}
+                                className="py-10 text-center text-gray-500"
+                              >
+                                {t("noData")}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {tab === 2 && (
@@ -524,6 +721,17 @@ const MedicalServiceDetails = () => {
         openDialog={isDialogOpen}
         handleClose={handleClose}
         onSubmit={onFormSubmit}
+        serviceEdit={selectedService}
+        isAddingMedicalService={!selectedService && isSubmitting}
+        isEditinMedicalService={!!selectedService && isSubmitting}
+      />
+
+      <AddEditPackagesDialog
+        id={id}
+        openDialog={isPackageDialog}
+        handleClose={handleClosePackageDialog}
+        onSubmit={onFormSubmitPackage}
+        serviceItemsData={serviceItemsData}
         serviceEdit={selectedService}
         isAddingMedicalService={!selectedService && isSubmitting}
         isEditinMedicalService={!!selectedService && isSubmitting}
