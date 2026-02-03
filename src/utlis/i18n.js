@@ -498,6 +498,12 @@ const resources = {
     edit_medical_service: "Edit Medical Service",
     add_analysis_service: "Add Analysis Service",
     add_analysis_item: "Add Analysis Item",
+    add_analysis_packages: "Add Package",
+    edit_analysis_packages: "Edit Package",
+    package_name: "Package Name",
+    service_price: "Service Price",
+    package_status: "status",
+    items: "Items",
     medical_tab_all: "all",
     medical_tab_analysis: "analysis",
     medical_tab_radiology: "radiology",
@@ -514,6 +520,7 @@ const resources = {
     add: "Add",
     medical_service_price: "Service Price",
     tabi_price: "Tabi Price",
+    total_price: "Total Price",
     medical_notes: "Notes",
     medical_tags: "Tags",
     service_description: "Service Description",
@@ -1002,6 +1009,13 @@ const resources = {
       add_analysis_service: "أضافة تحليل أو أشاعة",
       add_analysis_item: "أضافة عنصر",
       medical_tab_all: "الكل",
+      add_analysis_item: "أضافة تحليل أو أشاعة",
+      add_analysis_packages: "أضافة باكدجات",
+      edit_analysis_packages: "تعديل باكدجات",
+      package_name: "اسم الباكج",
+      service_price: "سعر الخدمة",
+      package_status: "الحالة",
+      items: "العناصر",
       medical_tab_analysis: "التحاليل",
       medical_tab_radiology: "الأشاعات",
       medical_tab_overview: "نظرة عامة",
@@ -1022,6 +1036,7 @@ const resources = {
       service_description: "وصف الخدمة",
       upload_image: "رفع الصورة",
       medical_order: "ترتيب الخدمة",
+      medical_tab_package: "باكدجات",
     },
   },
 };
@@ -1036,3 +1051,4 @@ i18n.use(initReactI18next).init({
 });
 
 export default i18n;
+
