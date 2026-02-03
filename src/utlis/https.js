@@ -5366,3 +5366,114 @@ export const updateAnalysisItem = async (id, data) => {
     throw new Error(error.message || "Error while adding medical service");
   }
 };
+
+
+export const getAllMedicalPackages = async (id) => {
+  try {
+    const token = getToken();
+    const response = await fetch(
+      `${API_URL}/dashboard/v1/admin/medical-service-packages/all?medical_service_id=${id}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.data;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addPackageItems = async (data) => {
+  try {
+    const token = getToken();
+
+    const response = await fetch(
+      `${API_URL}/dashboard/v1/admin/medical-service-packages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      },
+    );
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.message || "Error while adding medical service");
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.log("Add medical service error:", error);
+    throw new Error(error.message || "Error while adding medical service");
+  }
+};
+
+export const updatePackageItems = async (id, data) => {
+  try {
+    const token = getToken();
+
+    const response = await fetch(
+      `${API_URL}/dashboard/v1/admin/medical-service-packages/update/${id}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      },
+    );
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.message || "Error while adding medical service");
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.log("Add medical service error:", error);
+    throw new Error(error.message || "Error while adding medical service");
+  }
+};
+
+export const deletePackage = async (id) => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    const response = await fetch(
+      `${API_URL}/dashboard/v1/admin/medical-service-item/delete/${id}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.message || "Error while adding medical service");
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    throw new Error(error.message || "Error while adding medical service");
+  }
+};
+
