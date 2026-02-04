@@ -99,6 +99,10 @@ const Navbar = () => {
       return pageTranslations[language]["/hospital-services-report/:id"];
     }
 
+    if (pathname.startsWith("/medical-service/")) {
+      return pageTranslations[language]["/medical-service/:id"];
+    }
+
     return (
       pageTranslations[language][pathname] || pageTranslations[language].default
     );
