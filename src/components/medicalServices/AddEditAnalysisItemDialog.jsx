@@ -20,6 +20,8 @@ import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import { getAllAnalysisRadiologyServices } from "../../utlis/https";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+
 
 const AddEditAnalysisItemDialog = ({
   openDialog,
@@ -96,6 +98,23 @@ const AddEditAnalysisItemDialog = ({
   }, [openDialog, serviceEdit]);
 
   const handleSubmit = () => {
+    if (!formData.medical_service_id) {
+      toast.error(t("medical_service_id_required"));
+      return;
+    }
+    if (!formData.analysis_id) {
+      toast.error(t("analysis_is_required"));
+      return;
+    }
+    if (!formData.tabi_price) {
+      toast.error(t("tabi_price_required"));
+      return;
+    }
+
+    if (!formData.service_price) {
+      toast.error(t("service_price_required"));
+      return;
+    }
     const finalData = {
       ...formData,
       notes: formData.notes,
@@ -351,3 +370,4 @@ AddEditAnalysisItemDialog.propTypes = {
   serviceEdit: PropTypes.object,
   isEditinMedicalService: PropTypes.bool,
 };
+
