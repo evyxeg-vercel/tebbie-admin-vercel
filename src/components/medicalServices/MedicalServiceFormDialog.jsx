@@ -14,6 +14,7 @@ import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 
 const MedicalServiceFormDialog = ({
   openDialog,
@@ -118,6 +119,10 @@ const MedicalServiceFormDialog = ({
   };
 
   const handleSubmit = () => {
+    if (!formData.name.trim()) {
+      toast.error(t("name_is_required"));
+      return;
+    }
     setImagePreview(null);
     onSubmit(formData);
     setFormData({
@@ -341,3 +346,4 @@ MedicalServiceFormDialog.propTypes = {
   serviceEdit: PropTypes.object,
   isEditinMedicalService: PropTypes.bool,
 };
+
