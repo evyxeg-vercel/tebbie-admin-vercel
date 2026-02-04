@@ -498,6 +498,11 @@ const resources = {
     edit_medical_service: "Edit Medical Service",
     add_analysis_service: "Add Analysis Service",
     add_analysis_item: "Add Analysis Item",
+    analysis_is_required: "Analysis or Radiology is required",
+    tabi_price_required: "Medical price is required",
+    service_price_required: "Analysis price is required",
+    name_required: "Name is required",
+    items_required: "At least one item must be added",
     add_analysis_packages: "Add Package",
     edit_analysis_packages: "Edit Package",
     package_name: "Package Name",
@@ -1010,6 +1015,10 @@ const resources = {
       add_analysis_item: "أضافة عنصر",
       medical_tab_all: "الكل",
       add_analysis_item: "أضافة تحليل أو أشاعة",
+      analysis_is_required: "تحليل أو الاشعة مطلوب",
+      tabi_price_required: "سعر طبي مطلوب",
+      service_price_required: "سعر التحليل مطلوب",
+      items_required: "يجب أضافة عنصر",
       add_analysis_packages: "أضافة باكدجات",
       edit_analysis_packages: "تعديل باكدجات",
       package_name: "اسم الباكج",
@@ -1051,4 +1060,5 @@ i18n.use(initReactI18next).init({
 });
 
 export default i18n;
+
 
