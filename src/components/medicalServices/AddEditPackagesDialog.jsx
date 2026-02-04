@@ -15,6 +15,7 @@ import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 
 const AddEditPackagesDialog = ({
   openDialog,
@@ -77,6 +78,31 @@ const AddEditPackagesDialog = ({
   }, [openDialog, serviceEdit]);
 
   const handleSubmit = () => {
+
+    if (!formData.medical_service_id) {
+      toast.error(t("medical_service_id_required"));
+      // alert(t("medical_service_id_required"));
+      return;
+    }
+    if (!formData.name) {
+      toast.error(t("name_required"));
+      return;
+    }
+    if (!formData.tabi_price) {
+      toast.error(t("tabi_price_required"));
+      return;
+    }
+
+    if (!formData.medical_service_price) {
+      toast.error(t("service_price_required"));
+      return;
+    }
+    if (!formData.items.length == 0) {
+      toast.error(t("service_price_required"));
+      return;
+    }
+
+    
     const finalData = {
       ...formData,
       medical_service_price: Number(formData.medical_service_price),
@@ -204,3 +230,4 @@ AddEditPackagesDialog.propTypes = {
   serviceEdit: PropTypes.object,
   isEditinMedicalService: PropTypes.bool,
 };
+
