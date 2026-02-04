@@ -97,8 +97,8 @@ const AddEditPackagesDialog = ({
       toast.error(t("service_price_required"));
       return;
     }
-    if (!formData.items.length == 0) {
-      toast.error(t("service_price_required"));
+    if (formData.items.length == 0) {
+      toast.error(t("items_required"));
       return;
     }
 
@@ -230,4 +230,5 @@ AddEditPackagesDialog.propTypes = {
   serviceEdit: PropTypes.object,
   isEditinMedicalService: PropTypes.bool,
 };
+
 
